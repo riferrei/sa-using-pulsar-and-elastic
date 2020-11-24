@@ -1,0 +1,5 @@
+configs:
+    elasticSearchUrl: "http://elasticsearch:9200"
+    indexNumberOfShards: 1
+    indexNumberOfReplicas: 0
+    indexName: "sa-demo"
