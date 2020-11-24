@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# Creates a new sink connector using the provided archive.
-# The archive has the 2.6.2 version of the Elasticsearch
-# Pulsar I/O connector. To upgrade this connector go to
-# the following URL:
+# Creates a new sink connector using a provided archive.
+# You need to manually download the Pulsar I/O connector
+# for Elasticsearch and then rename the downloaded file
+# to `elasticsearch.nar`. To download the latest version
+# of the connector use the following URL:
 
-# https://pulsar.apache.org/en/download/
+# https://pulsar.apache.org/en/download
 
 $PULSAR_HOME/bin/pulsar-admin --admin-url http://localhost:8080 \
   sinks create --tenant public --namespace default \
