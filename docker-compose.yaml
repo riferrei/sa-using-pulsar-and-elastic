@@ -1,0 +1,91 @@
+version: '3'
+
+services:
+
+  send-messages:
+    build: ./stream-ingestion
+    image: send-messages:latest
+    container_name: send-messages
+    hostname: send-messages
+    networks:
+      - streaming-analytics
+    depends_on:
+      apache-pulsar:
+        condition: service_healthy
+    environment:
+      - PULSAR_URL=pulsar://apache-pulsar:6650
+      - TOPIC_NAME=sa-demo
+
+  apache-pulsar:
+    command: bin/pulsar standalone
+    image: apachepulsar/pulsar-all
+    container_name: apache-pulsar
+    hostname: apache-pulsar
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+    - streaming-analytics:/pulsar/data
+    ports:
+    - 8080:8080
+    - 6650:6650
+    networks:
+      - streaming-analytics
+    healthcheck:
+      interval: 10s
+      retries: 20
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:8080/admin/v2/clusters/standalone
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
+    container_name: elasticsearch
+    hostname: elasticsearch
+    environment:
+    - bootstrap.memory_lock=true
+    - cluster.name=streaming-analytics
+    - cluster.routing.allocation.disk.threshold_enabled=false
+    - discovery.type=single-node
+    - ES_JAVA_OPTS=-XX:UseAVX=2 -Xms1g -Xmx1g
+    ulimits:
+      memlock:
+        hard: -1
+        soft: -1
+    volumes:
+    - streaming-analytics:/usr/share/elasticsearch/data
+    ports:
+    - 9200:9200
+    networks:
+    - streaming-analytics
+    healthcheck:
+      interval: 20s
+      retries: 10
+      test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.10.0
+    container_name: kibana
+    hostname: kibana
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+    - 5601:5601
+    networks:
+    - streaming-analytics
+    healthcheck:
+      interval: 10s
+      retries: 20
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:5601/api/status
+
+volumes:
+  streaming-analytics:
+    driver: local
+    name: streaming-analytics
+
+networks:
+  streaming-analytics:
+    driver: bridge
+    name: streaming-analytics
