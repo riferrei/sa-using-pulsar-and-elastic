@@ -33,7 +33,7 @@ func main() {
 		ConnectionTimeout: 30 * time.Second,
 	})
 	if err != nil {
-		log.Fatalf("Could not instantiate Pulsar client: %v", err)
+		log.Panicf("Could not instantiate Pulsar client: %v", err)
 	}
 	defer client.Close()
 
@@ -42,7 +42,7 @@ func main() {
 		Topic: os.Getenv(topicNameEnvVar),
 	})
 	if err != nil {
-		log.Fatalf("Could not instantiate Pulsar producer: %v", err)
+		log.Panicf("Could not instantiate Pulsar producer: %v", err)
 	}
 	defer producer.Close()
 
